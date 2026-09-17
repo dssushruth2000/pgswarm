@@ -1,0 +1,15 @@
+services:
+  sandbox:
+    build: ./sandbox
+    environment:
+      POSTGRES_PASSWORD: sandbox
+      POSTGRES_DB: bench
+    tmpfs:
+      - /var/lib/postgresql/data:rw,size=4096m
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c max_wal_size=1GB
+      -c fsync=off
+      -c synchronous_commit=off
+    ports: ["55432:5432"]

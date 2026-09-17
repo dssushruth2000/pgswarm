@@ -1,0 +1,19 @@
+seed_rows: 500000
+insert_batch_size: 5000
+read_runs: 5
+write_runs: 3
+statement_timeout_ms: 10000
+run_timeout_s: 180
+max_candidates_screened: 10
+archetypes: [max_read, min_write, rewrite_only]
+model_dev: gemini-flash
+model_final: gemini-pro
+token_budget_usd_per_run: 0.15
+
+sandbox:
+  host: localhost
+  port: 55432
+  user: postgres
+  password: sandbox
+  admin_db: bench
+  seeded_db: bench_seeded

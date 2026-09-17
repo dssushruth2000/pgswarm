@@ -1,0 +1,1 @@
+"""Adversarial PostgreSQL index optimizer."""

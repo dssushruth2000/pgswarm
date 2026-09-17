@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>index optimizer — crude viewer</title>
+</head>
+<body>
+  <h1>index optimizer — crude viewer</h1>
+  <p>Phase 4. No styling on purpose.</p>
+  <button id="run" type="button">Run benchmark</button>
+  <p id="status">Idle.</p>
+  <h2>Baseline</h2>
+  <table id="baseline" border="1">
+    <thead>
+      <tr>
+        <th>plan_node</th>
+        <th>read_ms_median</th>
+        <th>wal_bytes</th>
+        <th>insert_ms_median</th>
+        <th>heap_fetches</th>
+        <th>index_bytes</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h2>Candidate (deltas vs baseline)</h2>
+  <table id="deltas" border="1">
+    <thead>
+      <tr>
+        <th>archetype</th>
+        <th>plan_node</th>
+        <th>heap_fetches</th>
+        <th>read_ms_delta</th>
+        <th>wal_bytes_delta</th>
+        <th>insert_ms_delta</th>
+        <th>index_bytes</th>
+        <th>rationale</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h2>Raw JSON</h2>
+  <pre id="raw"></pre>
+  <script>
+    const statusEl = document.getElementById("status");
+    const rawEl = document.getElementById("raw");
+    const baselineBody = document.querySelector("#baseline tbody");
+    const deltasBody = document.querySelector("#deltas tbody");
+
+    function cell(text) {
+      const td = document.createElement("td");
+      td.textContent = text;
+      return td;
+    }
+
+    function fillBaseline(b) {
+      baselineBody.replaceChildren();
+      const tr = document.createElement("tr");
+      tr.append(
+        cell(b.plan_node),
+        cell(b.read_ms_median),
+        cell(b.wal_bytes),
+        cell(b.insert_ms_median),
+        cell(b.heap_fetches),
+        cell(b.index_bytes)
+      );
+      baselineBody.appendChild(tr);
+    }
+
+    function fillDeltas(deltas) {
+      deltasBody.replaceChildren();
+      for (const d of deltas) {
+        const tr = document.createElement("tr");
+        tr.append(
+          cell(d.candidate.archetype),
+          cell(d.plan_node),
+          cell(d.heap_fetches),
+          cell(d.read_ms_delta),
+          cell(d.wal_bytes_delta),
+          cell(d.insert_ms_delta),
+          cell(d.index_bytes),
+          cell(d.candidate.rationale)
+        );
+        deltasBody.appendChild(tr);
+      }
+    }
+
+    document.getElementById("run").onclick = async () => {
+      statusEl.textContent = "Running…";
+      rawEl.textContent = "";
+      baselineBody.replaceChildren();
+      deltasBody.replaceChildren();
+      try {
+        const res = await fetch("/api/bench");
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status + " " + (await res.text()));
+        }
+        const data = await res.json();
+        fillBaseline(data.baseline);
+        fillDeltas(data.deltas);
+        rawEl.textContent = JSON.stringify(data, null, 2);
+        statusEl.textContent = "Done.";
+      } catch (err) {
+        statusEl.textContent = "Error: " + err;
+      }
+    };
+  </script>
+</body>
+</html>
